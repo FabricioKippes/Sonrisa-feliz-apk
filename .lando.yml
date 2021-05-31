@@ -1,0 +1,39 @@
+name: sonrisa-feliz-api
+recipe: laravel
+config:
+  php: '7.3'
+  webroot: public
+  via: nginx
+services:
+  appserver:
+    type: php:7.3
+    webroot: .
+  appserver_nginx:
+    type: nginx
+    webroot: public
+    ssl: true
+    config:
+      vhosts: lando-configs/local-sonrisa.conf.tpl
+  cache:
+    type: redis:5
+    persist: true
+    portforward: true
+  node:
+    type: node:10
+    globals:
+      yarn: '1.22.4'
+    run:
+      - 'cd $LANDO_MOUNT && yarn install'
+tooling:
+  redis-cli:
+    service: cache
+  php-unit:
+    cmd:
+      - appserver: 'phpunit --testsuite Sonrisa'
+  laravel-horizon:
+    cmd:
+      - appserver: 'php artisan horizon'
+  yarn:
+    service: node
+    cmd: 'cd $LANDO_MOUNT && yarn'
+    description: Install all the dependencies listed within package.json.
